@@ -1,0 +1,30 @@
+sequenceDiagram
+    actor Approver
+    participant API as Invoice API
+    participant DB as Azure SQL + outbox (proposed)
+    participant Worker as Submission worker (proposed)
+    participant Bus as Azure Service Bus (proposed)
+    participant PayEx as PayEx (proposed)
+
+    Approver->>API: Approve invoice
+    API->>DB: Transaction: persist decision + audit + outbox item
+    DB-->>API: Commit
+    API-->>Approver: Approval recorded; provider submission pending
+    Worker->>DB: Claim pending outbox item
+    Worker->>Bus: Publish work (if topic is retained)
+    Bus-->>Worker: Deliver work
+    Worker->>PayEx: Submit with stable idempotency key
+    alt Definite success
+        PayEx-->>Worker: Success + provider reference
+        Worker->>DB: Persist reference and completed status
+    else Definite failure
+        PayEx-->>Worker: Definite rejection
+        Worker->>DB: Record failure / retry eligibility
+    else Timeout or ambiguous response
+        PayEx-->>Worker: Outcome unknown
+        Worker->>DB: Record unknown outcome; do not blindly submit with a new key
+        Note over Worker,PayEx: Retry same key if PayEx deduplicates; otherwise reconcile before resubmission
+    end
+
+    %% All DB/outbox/worker/Service Bus/PayEx elements are proposed, not implemented.
+    %% Scenario and non-existence statement: ops/README.md and AGENTS.md.

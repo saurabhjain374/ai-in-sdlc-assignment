@@ -1,0 +1,20 @@
+flowchart LR
+    caller["Approver / Admin caller"]
+    subgraph target["Proposed production target — NOT IMPLEMENTED"]
+        api["ASP.NET Core Invoice API"]
+        db[("Azure SQL: invoices + audit records")]
+        outbox[("Transactional outbox")]
+        worker["Background submission worker (new)"]
+        bus["Azure Service Bus (planned / currently unused)"]
+        payex["PayEx API (new integration)"]
+    end
+    caller --> api
+    api -->|single DB transaction: decision + audit + outbox| db
+    db --- outbox
+    outbox -->|dispatch work| bus
+    bus --> worker
+    worker -->|stable idempotency key| payex
+    worker -->|provider reference / outcome / audit status| db
+
+    %% Azure SQL, topic and PayEx are explicitly described as not yet in code in ops/README.md and AGENTS.md.
+    %% Outbox and worker are proposed design elements, not current repository components.
