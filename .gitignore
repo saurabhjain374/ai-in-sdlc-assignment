@@ -8,3 +8,12 @@ node_modules/
 .env
 test-results/
 playwright-report/
+# Environment and secrets
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# IDE and local configuration
+.vscode/
