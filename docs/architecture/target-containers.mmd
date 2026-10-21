@@ -1,20 +1,19 @@
 ﻿flowchart TB
     caller["Approver / Admin caller"]
 
-    subgraph target["PROPOSED TARGET — NOT IMPLEMENTED"]
+    subgraph target["PROPOSED TARGET - NOT IMPLEMENTED"]
         direction TB
 
         api["ASP.NET Core Invoice API"]
 
         subgraph persistence["DURABLE PERSISTENCE"]
             direction LR
-            db[("Azure SQL<br/>Invoices + audit records")]
-            outbox[("Transactional outbox")]
+            db[("Azure SQL: invoices, audit and outbox")]
         end
 
         subgraph delivery["ASYNC DELIVERY"]
             direction LR
-            bus[["Azure Service Bus<br/>Planned topic"]]
+            bus[["Azure Service Bus: planned topic"]]
             worker["Background submission worker"]
         end
 
@@ -22,33 +21,32 @@
     end
 
     caller -->|HTTPS request| api
-    api -->|Atomic transaction:<br/>decision + audit + outbox| db
-    api -->|Write submission intent| outbox
-    outbox -->|Dispatch pending work| bus
+    api -->|Single atomic DB transaction: decision, audit event and outbox intent| db
+    db -->|Outbox dispatcher publishes pending work| bus
     bus --> worker
-    worker -->|Submit with stable idempotency key| payex
-    payex -->|Provider result / reference| worker
-    worker -->|Persist outcome and status| db
+    worker -->|Submit using stable idempotency key| payex
+    payex -->|Provider result or reference| worker
+    worker -->|Persist submission outcome and status| db
 
-    classDef callerStyle fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-width:1.5px
-    classDef apiStyle fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
-    classDef persistenceStyle fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
-    classDef deliveryStyle fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px
-    classDef externalStyle fill:#ffedd5,stroke:#ea580c,color:#9a3412,stroke-width:2px
+    classDef callerStyle fill:#f1f5f9,stroke:#64748b,color:#0f172a
+    classDef apiStyle fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a
+    classDef persistenceStyle fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95
+    classDef deliveryStyle fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef externalStyle fill:#ffedd5,stroke:#ea580c,color:#9a3412
 
     class caller callerStyle
     class api apiStyle
-    class db,outbox persistenceStyle
+    class db persistenceStyle
     class bus,worker deliveryStyle
     class payex externalStyle
 
-    style target fill:#f8fafc,stroke:#475569,stroke-width:2px,color:#0f172a
-    style persistence fill:#f5f3ff,stroke:#a78bfa,stroke-width:1.5px,color:#4c1d95
-    style delivery fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#78350f
+    style target fill:#f8fafc,stroke:#475569,stroke-width:2px
+    style persistence fill:#f5f3ff,stroke:#a78bfa,stroke-width:1.5px
+    style delivery fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px
 
-    %% PROPOSED DESIGN — NOT IMPLEMENTED.
+    %% PROPOSED DESIGN - NOT IMPLEMENTED.
     %% Azure SQL, Service Bus and PayEx integration are not implemented in the inspected code.
-    %% The API transaction atomically persists the decision, audit event and outbox intent.
-    %% The outbox supports durable at-least-once delivery; exactly-once external effects
-    %% require provider idempotency or reconciliation of ambiguous outcomes.
+    %% The decision, audit event and outbox intent must commit in one database transaction.
+    %% An outbox supports durable at-least-once delivery, not automatic exactly-once external effects.
+    %% Provider idempotency or reconciliation is required to handle ambiguous submission outcomes.
     %% Evidence of current limitations: ops/README.md and AGENTS.md.
