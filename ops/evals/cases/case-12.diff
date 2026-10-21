@@ -1,0 +1,13 @@
+
+diff --git a/backend/src/InvoiceApp.Domain/Invoice.cs b/backend/src/InvoiceApp.Domain/Invoice.cs
+--- a/backend/src/InvoiceApp.Domain/Invoice.cs
++++ b/backend/src/InvoiceApp.Domain/Invoice.cs
+@@ -2,7 +2,7 @@ namespace InvoiceApp.Domain;
+
+ public class Invoice
+ {
+-    public string Id { get; set; } = string.Empty;
++    public string Id { get; set; } = "";
+     public string CustomerName { get; set; } = string.Empty;
+     public decimal Amount { get; set; }
+     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;

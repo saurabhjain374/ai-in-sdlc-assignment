@@ -1,0 +1,79 @@
+run,case,expected_defect,reported_by_ai,score,justification
+1,case-01,Undefined CurrentUser.Name reference,No,FN,Recorded Run 1 summary does not mention the compile-time error
+1,case-01,Null request.Ids causes runtime exception,Yes,TP,Identified the nullable IDs problem
+1,case-01,Direct service calls bypass HTTP exception mapping,Yes,TP,Identified unhandled domain errors
+1,case-01,Partial batch approval on later failure,Yes,TP,Identified partial approval behavior
+2,case-01,Undefined CurrentUser.Name reference,No,FN,Recorded Run 2 summary does not mention the compile-time error
+2,case-01,Null request.Ids causes runtime exception,Yes,TP,Identified null IDs
+2,case-01,Direct service calls bypass HTTP exception mapping,Yes,TP,Identified unhandled service exceptions
+2,case-01,Partial batch approval on later failure,No,FN,Recorded Run 2 summary explicitly missed partial batch approval
+3,case-01,Undefined CurrentUser.Name reference,Yes,TP,Explicitly identified the undefined CurrentUser reference
+3,case-01,Null request.Ids causes runtime exception,Yes,TP,Identified null IDs
+3,case-01,Direct service calls bypass HTTP exception mapping,Yes,TP,Identified unhandled errors
+3,case-01,Partial batch approval on later failure,Yes,TP,Identified partial batch approval
+4,case-01,Undefined CurrentUser.Name reference,Yes,TP,Identified compile-time failure
+4,case-01,Null request.Ids causes runtime exception,Yes,TP,Identified NullReferenceException risk
+4,case-01,Direct service calls bypass HTTP exception mapping,Yes,TP,Identified incorrect 500 responses instead of established 404/409 mappings
+4,case-01,Partial batch approval on later failure,No,FN,Recorded Run 4 summary says partial batch approval was missed
+1,case-01,Admin role authorization conflict,Yes,Unverified,Run 1 reported an Admin authorization issue; confirm the existing authorization contract before final scoring
+2,case-01,Admin role authorization conflict,Yes,Unverified,Run 2 reported an Admin authorization issue; confirm the existing authorization contract before final scoring
+3,case-01,Admin role authorization conflict,Yes,Unverified,Run 3 reported an Admin authorization issue; confirm the existing authorization contract before final scoring
+4,case-01,Admin role authorization conflict,No,Unverified,Run 4 did not report this issue; determine whether it is an expected defect before counting a false negative
+1,case-02,Missing query-service dependency,Yes,TP,Run 1 identified the undeclared _queries dependency
+1,case-02,SQL injection in customer/status query,Yes,TP,Run 1 identified SQL injection through customer/status values
+2,case-02,Missing query-service dependency,Yes,TP,Run 2 identified the undeclared _queries dependency
+2,case-02,SQL injection in customer/status query,Yes,TP,Run 2 identified SQL injection
+3,case-02,Missing query-service dependency,Yes,TP,Run 3 identified _queries and missing query registration/build failure
+3,case-02,SQL injection in customer/status query,Yes,TP,Run 3 identified SQL injection
+4,case-02,Missing query-service dependency,Yes,TP,Run 4 identified the undeclared _queries dependency and missing query-service contract
+4,case-02,SQL injection in customer/status query,Yes,TP,Run 4 identified SQL injection through customer/status parameters
+1,case-03,Monetary rounding defect in incompatible diff,Excluded,Excluded,Fixture targets static Apply while current source exposes instance ApplyDiscount; exclude from primary metrics
+2,case-03,Monetary rounding defect in incompatible diff,Excluded,Excluded,Fixture targets static Apply while current source exposes instance ApplyDiscount; exclude from primary metrics
+3,case-03,Monetary rounding defect in incompatible diff,Excluded,Excluded,Fixture targets static Apply while current source exposes instance ApplyDiscount; exclude from primary metrics
+4,case-03,Monetary rounding defect in incompatible diff,Excluded,Excluded,Fixture targets static Apply while current source exposes instance ApplyDiscount; exclude from primary metrics
+1,case-04,Repository field and constructor parameter rename,No,TP,Clean change; Run 1 correctly reported no findings
+2,case-04,Repository field and constructor parameter rename,No,TP,Clean change; Run 2 correctly reported no findings
+3,case-04,Repository field and constructor parameter rename,Yes,FP,Run 3 raised speculative named-argument compatibility risk without an established affected caller
+4,case-04,Repository field and constructor parameter rename,No,TP,Clean change; Run 4 correctly reported no findings
+1,case-05,Delete method does not exist on repository interface,Yes,TP,Run 1 identified the Delete/Remove mismatch
+1,case-05,Undefined logger and CurrentUser references,Yes,TP,Run 1 identified undefined logger and CurrentUser
+2,case-05,Delete method does not exist on repository interface,Yes,TP,Run 2 identified the Delete/Remove mismatch
+2,case-05,Undefined logger and CurrentUser references,Yes,TP,Run 2 identified undefined logger and CurrentUser
+3,case-05,Delete method does not exist on repository interface,Yes,TP,Run 3 identified the Delete/Remove mismatch
+3,case-05,Undefined logger and CurrentUser references,Yes,TP,Run 3 identified undefined logger and CurrentUser
+4,case-05,Delete method does not exist on repository interface,Yes,TP,Run 4 identified the Delete/Remove mismatch
+4,case-05,Undefined logger and CurrentUser references,Yes,TP,Run 4 identified undefined logger and CurrentUser
+1,case-06,Undefined Pending helper causes test compilation failure,Yes,TP,Run 1 identified the undefined Pending helper calls
+2,case-06,Undefined Pending helper causes test compilation failure,Yes,TP,Run 2 identified the undefined Pending helper calls
+3,case-06,Undefined Pending helper causes test compilation failure,Yes,TP,Run 3 identified the undefined Pending helper calls
+4,case-06,Undefined Pending helper causes test compilation failure,Yes,TP,Run 4 identified the undefined Pending helper calls
+1,case-07,Undefined logger and CurrentUser references,Yes,TP,Run 1 identified undefined logger and CurrentUser references
+1,case-07,Sensitive invoice or session data logged,Yes,TP,Run 1 identified sensitive logging
+2,case-07,Undefined logger and CurrentUser references,Yes,TP,Run 2 identified undefined logger and CurrentUser references
+2,case-07,Sensitive invoice or session data logged,Yes,TP,Run 2 identified sensitive logging
+3,case-07,Undefined logger and CurrentUser references,Yes,TP,Run 3 identified undefined logger and CurrentUser references
+3,case-07,Sensitive invoice or session data logged,Yes,TP,Run 3 identified sensitive logging
+4,case-07,Undefined logger and CurrentUser references,Yes,TP,Run 4 identified undefined logger and CurrentUser references
+4,case-07,Sensitive invoice or session data logged,Yes,TP,Run 4 identified sensitive logging
+1,case-08,Replacing ConcurrentDictionary introduces thread-safety race,Yes,TP,Run 1 identified unsafe Dictionary replacement and ContainsKey/assignment race
+2,case-08,Replacing ConcurrentDictionary introduces thread-safety race,Yes,TP,Run 2 identified unsafe Dictionary replacement and duplicate race
+3,case-08,Replacing ConcurrentDictionary introduces thread-safety race,Yes,TP,Run 3 identified unsafe Dictionary replacement and non-atomic duplicate check
+4,case-08,Replacing ConcurrentDictionary introduces thread-safety race,Yes,TP,Run 4 identified loss of thread safety and non-atomic duplicate detection
+1,case-09,Defect introduced by logging-level change,Yes,FP,Run 1 reported a pre-existing README issue unrelated to the logging-level diff
+2,case-09,Defect introduced by logging-level change,Yes,FP,Run 2 reported pre-existing README issues unrelated to the logging-level diff
+3,case-09,Defect introduced by logging-level change,Yes,FP,Run 3 reported pre-existing README issues unrelated to the logging-level diff
+4,case-09,Defect introduced by logging-level change,Yes,FP,Run 4 reported pre-existing README issues unrelated to the logging-level diff
+1,case-10,Catch-all exception handler masks failures as HTTP 200,No,FN,Run 1 missed the exception-handling defect and reported unrelated concurrency issues
+1,case-10,Unrelated concurrency finding,Yes,FP,Run 1 reported concurrency issues not introduced by the Case 10 diff
+2,case-10,Catch-all exception handler masks failures as HTTP 200,Yes,TP,Run 2 identified the broad catch returning HTTP 200 completed
+3,case-10,Catch-all exception handler masks failures as HTTP 200,Yes,TP,Run 3 identified the broad catch returning HTTP 200 completed
+4,case-10,Catch-all exception handler masks failures as HTTP 200,Yes,TP,Run 4 identified the broad catch and hidden failures
+4,case-11,Removing Draft guard allows invalid invoice lifecycle transitions,Yes,TP,Run 4 identified that non-Draft invoices could be resubmitted and grounded the finding in the existing lifecycle contract
+4,case-12,Replace string.Empty with equivalent empty string literal,No,TN,Run 4 correctly reported no findings for the clean control case
+
+
+
+
+
+
+

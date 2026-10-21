@@ -1,0 +1,19 @@
+
+diff --git a/backend/src/InvoiceApp.Domain/ApprovalService.cs b/backend/src/InvoiceApp.Domain/ApprovalService.cs
+--- a/backend/src/InvoiceApp.Domain/ApprovalService.cs
++++ b/backend/src/InvoiceApp.Domain/ApprovalService.cs
+@@ -13,12 +13,7 @@ public class ApprovalService
+     public Invoice Submit(string invoiceId)
+     {
+         var invoice = Find(invoiceId);
+
+-        if (invoice.Status != InvoiceStatus.Draft)
+-        {
+-            throw new InvalidOperationException(
+-                $"Invoice {invoiceId} is {invoice.Status}; only drafts can be submitted.");
+-        }
+-
+         invoice.Status = InvoiceStatus.PendingApproval;
+         _repository.Update(invoice);
+         return invoice;
+     }
