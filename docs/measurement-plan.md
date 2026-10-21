@@ -14,16 +14,46 @@ Measure whether AI-assisted software delivery improves delivery speed without re
 
 ## Baseline Evidence
 
-Record at least two actual values from available repository or CI history.
+The available repository history provides two observed activity values. These are repository-activity indicators, not substitutes for the three delivery-performance metrics defined above. No production deployment, incident, or pull-request review timestamps were available during this inspection.
 
-For each value, include:
-- Metric and measured value
-- Observation period
-- Exact source, command, or query
-- Evidence location or link
-- Any limitations or assumptions
+### Evidence 1 — Repository activity span
 
-Do not invent missing historical data. If a metric cannot be measured from available evidence, record it as unavailable and explain why.
+- **Observed value:** 48 hours, 42 minutes, 22 seconds.
+- **Observation period:** 2026-10-19 17:04:55 +05:30 to 2026-10-21 17:47:17 +05:30.
+- **Source:** Local Git repository history.
+- **Command:** `git log -10 --date=iso-strict --pretty=format:"%h | %ad | %s"`
+- **Initial commit:** `abe109b` — 2026-10-19 17:04:55 +05:30.
+- **Latest observed commit:** `3c713e5` — 2026-10-21 17:47:17 +05:30.
+- **Interpretation:** Elapsed time between the initial commit and the latest observed commit in the inspected history.
+- **Limitation:** This does not measure the lead time of an individual change because production deployment timestamps are unavailable.
+
+### Evidence 2 — Evaluation-file commit count
+
+- **Observed value:** 5 commits affecting `ops/evals`.
+- **Observation period:** 2026-10-19 17:04:55 +05:30 to 2026-10-21 17:47:17 +05:30.
+- **Source:** Local Git repository history for evaluation files.
+- **Command:** `git log --all --format="%h | %ad | %s" --date=iso-strict -- ops/evals`
+- **Evidence:** Five listed commits: `abe109b`, `9e3a7d2`, `ffe6811`, `7864fe1`, and `3c713e5`.
+- **Interpretation:** Number of recorded commits affecting the evaluation directory during the observed history.
+- **Limitation:** Commit count measures repository activity only. It does not measure review turnaround, defect detection effectiveness, or production delivery performance.
+
+### CI Evidence Availability
+
+- **Workflow:** `.github/workflows/ci.yml`
+- **Triggers:** Push to `main` and pull requests targeting `main`.
+- **Configured checks:** Release build and test for `backend/InvoiceApp.sln`.
+- **Historical run evidence:** No workflow runs were visible on the GitHub Actions page during inspection.
+- **Baseline implication:** Historical CI success rate, CI duration, and deployment timing cannot be calculated from the available run history.
+- **Next action:** Capture a successful run after CI executes, retaining its run URL, conclusion, timestamp, and duration.
+- **Limitation:** A build/test workflow does not establish production deployment timing or production change failures.
+
+### Unavailable baseline metrics
+
+- **Lead time for changes:** Unavailable; production deployment timestamps are missing.
+- **Change failure rate:** Unavailable; the required production-change denominator and linked incident, rollback, or hotfix records are missing.
+- **Review turnaround time:** Unavailable; pull-request creation and first-review timestamps are missing.
+
+Do not interpret unavailable values as zero. Capture the necessary source records before making a baseline or before/after improvement claim.
 
 ### CI Evidence Availability
 

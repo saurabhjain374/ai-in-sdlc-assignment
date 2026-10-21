@@ -25,8 +25,14 @@ The current application is an ASP.NET Core API with a static UI, session middlew
 - A human or browser/client calls the HTTP API. The repository defines routes, but does not establish a specific deployed caller.
 - The API process hosts the static UI because `Program.cs` configures default and static files; actual production hosting topology is not shown.
 - In-memory changes are not durable across process restart. No database transaction, external payment call, or production message publication is implemented in the inspected code.
-- The target diagrams are proposals. `ops/README.md` and `AGENTS.md` explicitly warn that database, message topic and PayEx are planned and do not exist in code.
+- The target diagrams are proposals, not descriptions of current runtime behavior. The database, message topic, and PayEx integration are planned and are not implemented in the inspected code, as noted in `ops/README.md` and `AGENTS.md`.
 
-## Target-state design note
+## Target-state design note — PROPOSED, NOT IMPLEMENTED
 
-The proposed outbox pattern atomically records the invoice decision, audit event, and intent to submit. A worker delivers at least once. An outbox alone does **not** guarantee exactly-once effects at PayEx: use provider-supported idempotency with a stable key, or reconcile ambiguous outcomes before any resubmission. A timeout means the result is unknown, not necessarily failed.
+The target diagrams describe a proposed design, not existing functionality. Any persistence, outbox, worker, message topic, or PayEx integration shown in those diagrams must be labelled **PROPOSED — NOT IMPLEMENTED**.
+
+The proposed outbox pattern atomically records the invoice decision, audit event, and intent to submit. A worker delivers at least once. An outbox alone does not guarantee exactly-once effects at PayEx: use provider-supported idempotency with a stable key, or reconcile ambiguous outcomes before resubmission. A timeout means the result is unknown, not necessarily failed.
+
+## Architecture test scope
+
+`backend/tests/InvoiceApp.Tests/ArchitectureTests.cs` contains an executable test that checks the Domain assembly does not directly reference `InvoiceApp.Api` or assemblies whose names start with `Microsoft.AspNetCore`. This enforces one structural dependency rule; it does not prove that all architectural constraints are satisfied.
