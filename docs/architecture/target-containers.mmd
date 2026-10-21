@@ -1,20 +1,54 @@
-flowchart LR
+﻿flowchart TB
     caller["Approver / Admin caller"]
-    subgraph target["Proposed production target — NOT IMPLEMENTED"]
-        api["ASP.NET Core Invoice API"]
-        db[("Azure SQL: invoices + audit records")]
-        outbox[("Transactional outbox")]
-        worker["Background submission worker (new)"]
-        bus["Azure Service Bus (planned / currently unused)"]
-        payex["PayEx API (new integration)"]
-    end
-    caller --> api
-    api -->|single DB transaction: decision + audit + outbox| db
-    db --- outbox
-    outbox -->|dispatch work| bus
-    bus --> worker
-    worker -->|stable idempotency key| payex
-    worker -->|provider reference / outcome / audit status| db
 
-    %% Azure SQL, topic and PayEx are explicitly described as not yet in code in ops/README.md and AGENTS.md.
-    %% Outbox and worker are proposed design elements, not current repository components.
+    subgraph target["PROPOSED TARGET — NOT IMPLEMENTED"]
+        direction TB
+
+        api["ASP.NET Core Invoice API"]
+
+        subgraph persistence["DURABLE PERSISTENCE"]
+            direction LR
+            db[("Azure SQL<br/>Invoices + audit records")]
+            outbox[("Transactional outbox")]
+        end
+
+        subgraph delivery["ASYNC DELIVERY"]
+            direction LR
+            bus[["Azure Service Bus<br/>Planned topic"]]
+            worker["Background submission worker"]
+        end
+
+        payex(["External PayEx API"])
+    end
+
+    caller -->|HTTPS request| api
+    api -->|Atomic transaction:<br/>decision + audit + outbox| db
+    api -->|Write submission intent| outbox
+    outbox -->|Dispatch pending work| bus
+    bus --> worker
+    worker -->|Submit with stable idempotency key| payex
+    payex -->|Provider result / reference| worker
+    worker -->|Persist outcome and status| db
+
+    classDef callerStyle fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-width:1.5px
+    classDef apiStyle fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef persistenceStyle fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95,stroke-width:1.5px
+    classDef deliveryStyle fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:1.5px
+    classDef externalStyle fill:#ffedd5,stroke:#ea580c,color:#9a3412,stroke-width:2px
+
+    class caller callerStyle
+    class api apiStyle
+    class db,outbox persistenceStyle
+    class bus,worker deliveryStyle
+    class payex externalStyle
+
+    style target fill:#f8fafc,stroke:#475569,stroke-width:2px,color:#0f172a
+    style persistence fill:#f5f3ff,stroke:#a78bfa,stroke-width:1.5px,color:#4c1d95
+    style delivery fill:#fffbeb,stroke:#f59e0b,stroke-width:1.5px,color:#78350f
+
+    %% PROPOSED DESIGN — NOT IMPLEMENTED.
+    %% Azure SQL, Service Bus and PayEx integration are not implemented in the inspected code.
+    %% The API transaction atomically persists the decision, audit event and outbox intent.
+    %% The outbox supports durable at-least-once delivery; exactly-once external effects
+    %% require provider idempotency or reconciliation of ambiguous outcomes.
+    %% Evidence of current limitations: ops/README.md and AGENTS.md.

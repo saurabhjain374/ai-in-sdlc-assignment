@@ -1,28 +1,39 @@
 ﻿sequenceDiagram
+    autonumber
     actor Approver
     participant API as Invoice API
-    participant DB as Database and outbox
+    participant DB as Database + outbox
     participant Worker as Submission worker
-    participant PayEx as PayEx API
+    participant PayEx as External PayEx API
 
-    Approver->>API: Approve invoice
-    API->>DB: Save decision, audit and outbox transactionally
-    DB-->>API: Commit successful
-    API-->>Approver: Approval recorded
-
-    Worker->>DB: Read pending outbox item
-    DB-->>Worker: Return submission details
-    Worker->>PayEx: Submit with stable idempotency key
-    PayEx-->>Worker: Return result
-
-    alt Success
-        Worker->>DB: Save provider reference and completed status
-    else Failure
-        Worker->>DB: Record failure
-    else Timeout
-        Worker->>DB: Record unknown outcome
-        Note over Worker,PayEx: Retry with the same key if supported
-        Note over Worker,PayEx: Otherwise reconcile before resubmission
+    rect rgb(239, 246, 255)
+        Approver->>API: Approve invoice
+        API->>DB: Begin transaction
+        API->>DB: Save decision + audit + outbox item
+        DB-->>API: Commit successful
+        API-->>Approver: Approval recorded
     end
 
-    Note over API,PayEx: PROPOSED DESIGN - NOT IMPLEMENTED
+    rect rgb(254, 243, 199)
+        Worker->>DB: Read pending outbox item
+        DB-->>Worker: Submission details + stable key
+        Worker->>PayEx: Submit invoice with idempotency key
+        PayEx-->>Worker: Result or provider reference
+
+        alt Confirmed success
+            Worker->>DB: Persist provider reference and completed status
+        else Confirmed failure
+            Worker->>DB: Record failure and retry policy state
+        else Timeout / ambiguous result
+            Worker->>DB: Record outcome as unknown
+            Note over Worker,PayEx: Retry with the same key if supported
+            Note over Worker,PayEx: Otherwise reconcile before resubmission
+        end
+    end
+
+    Note over Approver,PayEx: PROPOSED DESIGN — NOT IMPLEMENTED
+    Note over DB,Worker: Durable outbox enables at-least-once delivery, not automatic exactly-once effects
+
+    %% Proposed flow only; this sequence is not implemented in the current application.
+    %% Current source evidence and target assumptions: docs/architecture/README.md,
+    %% docs/decisions/ADR-001-payex-submission-reliability.md and ops/README.md.

@@ -1,34 +1,44 @@
-sequenceDiagram
-    actor Caller as Approver/Admin caller
-    participant Auth as SessionAuthMiddleware
+﻿sequenceDiagram
+    autonumber
+    actor Caller as Approver / Admin
+    participant Auth as Session Auth
     participant Controller as ApprovalsController
     participant Service as ApprovalService
     participant Contract as IInvoiceRepository
-    participant Store as InMemoryInvoiceRepository
+    participant Store as InMemoryRepository
 
-    Caller->>Auth: POST /api/approvals/{invoiceId}/approve
-    Auth->>Controller: Continue after session authentication
-    Note over Controller: RequireRole("Approver", "Admin")
-    Controller->>Service: Approve(invoiceId, session.Username)
-    Service->>Contract: GetById(invoiceId)
-    Contract->>Store: GetById(invoiceId)
-    Store-->>Contract: Invoice or null
-    Contract-->>Service: Invoice or null
-    alt Invoice not found
-        Service-->>Controller: KeyNotFoundException
-    else Invoice found and pending
-        Service->>Service: EnsurePending(invoice)
-        Service->>Service: Set Approved, DecidedBy, DecidedAt UTC
-        Service->>Contract: Update(invoice)
-        Contract->>Store: Update(invoice)
-        Store-->>Contract: Updated in-memory item
-        Contract-->>Service: Return
-        Service-->>Controller: Updated Invoice
+    rect rgb(239, 246, 255)
+        Caller->>Auth: POST approve invoice
+        Auth->>Controller: Continue after session authentication
+        Note over Controller: RequireRole Approver or Admin
     end
+
+    rect rgb(236, 253, 245)
+        Controller->>Service: Approve(invoiceId, session.Username)
+        Service->>Contract: GetById(invoiceId)
+        Contract->>Store: GetById(invoiceId)
+        Store-->>Contract: Invoice or null
+        Contract-->>Service: Invoice or null
+
+        alt Invoice not found
+            Service-->>Controller: KeyNotFoundException
+        else Invoice found and pending
+            Service->>Service: EnsurePending(invoice)
+            Service->>Service: Set Approved, DecidedBy, DecidedAt UTC
+            Service->>Contract: Update(invoice)
+            Contract->>Store: Update(invoice)
+            Store-->>Contract: Updated in-memory item
+            Contract-->>Service: Return
+            Service-->>Controller: Updated Invoice
+        end
+    end
+
     Controller-->>Caller: Handle(...) maps result/error to HTTP response
 
-    %% Evidence: route, role and session username are in backend/src/InvoiceApp.Api/Controllers/ApprovalsController.cs.
-    %% Middleware registration is in backend/src/InvoiceApp.Api/Program.cs.
-    %% Lookup, pending-state guard, decision fields and update are in backend/src/InvoiceApp.Domain/ApprovalService.cs.
-    %% Concrete lookup/update are in backend/src/InvoiceApp.Api/InMemoryInvoiceRepository.cs.
-    %% Error mapping convention is documented in AGENTS.md and implemented by ApiControllerBase.
+    Note over Caller,Store: AS-BUILT — in-memory state; no durable database or PayEx submission
+
+    %% Evidence: route, role and session username: backend/src/InvoiceApp.Api/Controllers/ApprovalsController.cs.
+    %% Middleware registration: backend/src/InvoiceApp.Api/Program.cs.
+    %% Lookup, pending-state guard, decision fields and update: backend/src/InvoiceApp.Domain/ApprovalService.cs.
+    %% Concrete lookup/update: backend/src/InvoiceApp.Api/InMemoryInvoiceRepository.cs.
+    %% Error mapping convention: AGENTS.md and ApiControllerBase.
