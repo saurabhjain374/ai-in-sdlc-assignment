@@ -85,11 +85,11 @@ These results describe a small, assignment-specific CI sample. They are not prod
 
 ## 5. Follow-up measurement
 
-After verified CI and deployment records become available:
+Live CI evidence is now available for an initial sample of four successful GitHub Actions runs. Expand this sample over time and collect verified production deployment and pull-request review records before drawing conclusions about delivery performance.
 
-1. Capture baseline lead time, production change-failure rate, and review turnaround.
-2. Repeat collection over a comparable period after AI-assisted workflow changes.
-3. Record sample sizes and relevant workflow changes that may affect the comparison.
+1. Capture a baseline for lead time, production change-failure rate, and review turnaround using verified source records.
+2. Continue collecting CI run outcomes and detailed durations over a larger, representative period.
+3. Repeat collection after AI-assisted workflow changes, using comparable periods and recording sample sizes.
 4. Review whether speed improvements coincide with stable or improved quality; do not attribute changes to AI alone without considering other factors.
 
-**Current conclusion:** The repository provides evidence of development activity and a scenario pipeline fixture, but it does not yet provide enough verified live CI, production deployment, or review-event data to establish actual delivery-performance improvements.
+**Current conclusion:** The repository provides evidence of development activity, scenario-provided pipeline timings, and four successful live GitHub Actions runs. However, verified production deployment timestamps, production change-failure records, and pull-request review-event data remain unavailable. The current evidence is insufficient to establish actual delivery-performance improvements attributable to AI assistance.

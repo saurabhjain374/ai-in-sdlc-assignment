@@ -7,7 +7,7 @@ This log summarizes how AI assistance was used during the assignment. It is a re
 ## 1. Architecture documentation and tests
 
 - **AI assistance:** Helped map the existing invoice approval flow, identify relevant source files and symbols, draft Mermaid diagrams, and propose a structural architecture test.
-- **Human verification:** Checked the diagrams against the repository implementation, corrected Mermaid rendering issues, and ran the .NET test suite.
+- **Human verification:** Distinguished repository activity and scenario-provided pipeline fixtures from verified live CI runs and unavailable production performance measurements.
 - **Outcome:** As-built and proposed-target architecture documentation, with the target design explicitly marked as not implemented.
 
 ## 2. PayEx submission reliability ADR
