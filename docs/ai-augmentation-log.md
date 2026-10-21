@@ -31,8 +31,8 @@ This log summarizes how AI assistance was used during the assignment. It is a re
 ## 5. Measurement plan
 
 - **AI assistance:** Helped define lead time, change failure rate, and review turnaround, including potential data sources and calculation methods.
-- **Human verification:** Distinguished repository activity and scenario-provided pipeline fixtures from verified production performance measurements.
-- **Outcome:** A measurement plan with explicit evidence limitations. Unavailable production or CI measurements are not represented as zero or as verified live results.
+- **Human verification:** Distinguished repository activity and scenario-provided pipeline fixtures from four verified successful live GitHub Actions runs and unavailable production performance measurements.
+- **Outcome:** A measurement plan with explicit evidence limitations. Live CI results are reported separately from production metrics; unavailable production measurements are not represented as zero or as verified results.
 
 ## Limitations
 
