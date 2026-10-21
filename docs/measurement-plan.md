@@ -25,6 +25,17 @@ For each value, include:
 
 Do not invent missing historical data. If a metric cannot be measured from available evidence, record it as unavailable and explain why.
 
+### CI Evidence Availability
+
+- **Workflow:** `.github/workflows/ci.yml`
+- **Triggers:** Push to `main` and pull requests targeting `main`.
+- **Configured checks:** Release build and test for `backend/InvoiceApp.sln`.
+- **Historical run evidence:** No workflow runs were visible in the GitHub Actions page during this inspection.
+- **Baseline implication:** No historical CI success rate, CI duration, or deployment timing can be calculated from the available run history.
+- **Next action:** Capture a successful run after CI executes, and retain its run URL, conclusion, timestamp, and duration.
+- **Limitation:** A build/test workflow does not establish production deployment timing or production change failures.
+
+
 ### Preliminary Evidence — Repository Activity
 
 - **Source:** Local Git repository history.
@@ -34,6 +45,16 @@ Do not invent missing historical data. If a metric cannot be measured from avail
 - **Elapsed time:** 48 hours, 42 minutes, 22 seconds.
 - **Interpretation:** This measures the span between the initial commit and the latest observed commit, not the lead time of an individual change.
 - **Limitation:** Production deployment timestamps are not established by this Git log, so this value must not be reported as production lead time.
+
+### Evaluation File History
+
+- **Source:** Git history for `ops/evals`.
+- **Command:** `git log --all --reverse --format="%ad" --date=iso-strict -- ops/evals`
+- **Earliest recorded commit:** 2026-10-19 17:04:55 +05:30.
+- **Latest recorded commit:** 2026-10-21 17:47:17 +05:30.
+- **Elapsed time:** 48 hours, 42 minutes, 22 seconds.
+- **Interpretation:** This is the observed span of repository history affecting evaluation files. It is not a measure of individual review turnaround or production lead time.
+- **Limitation:** Git commit timestamps do not show when a reviewer first responded, when a review was completed, or when a production deployment occurred.
 
 
 ## Comparison Plan
