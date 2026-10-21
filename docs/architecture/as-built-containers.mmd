@@ -1,6 +1,4 @@
-﻿
-@'
-flowchart TB
+﻿flowchart TB
     caller["Approver / Admin caller"]
 
     subgraph host["AS-BUILT | ASP.NET Core application"]
@@ -54,4 +52,3 @@ flowchart TB
     %% IInvoiceRepository: backend/src/InvoiceApp.Domain/IInvoiceRepository.cs.
     %% InMemoryInvoiceRepository: backend/src/InvoiceApp.Api/InMemoryInvoiceRepository.cs.
     %% Invoice and InvoiceStatus: backend/src/InvoiceApp.Domain/Invoice.cs and InvoiceStatus.cs.
-'@ | Set-Content -Path "docs/architecture/as-built-containers.mmd" -Encoding utf8
