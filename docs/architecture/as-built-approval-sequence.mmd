@@ -14,28 +14,28 @@
     end
 
     rect rgb(236, 253, 245)
-        Controller->>Service: Approve(invoiceId, session.Username)
-        Service->>Contract: GetById(invoiceId)
-        Contract->>Store: GetById(invoiceId)
+        Controller->>Service: Approve invoice using session username
+        Service->>Contract: GetById invoice
+        Contract->>Store: GetById invoice
         Store-->>Contract: Invoice or null
         Contract-->>Service: Invoice or null
 
         alt Invoice not found
             Service-->>Controller: KeyNotFoundException
         else Invoice found and pending
-            Service->>Service: EnsurePending(invoice)
-            Service->>Service: Set Approved, DecidedBy, DecidedAt UTC
-            Service->>Contract: Update(invoice)
-            Contract->>Store: Update(invoice)
+            Service->>Service: EnsurePending
+            Service->>Service: Set Approved, DecidedBy and UTC timestamp
+            Service->>Contract: Update invoice
+            Contract->>Store: Update invoice
             Store-->>Contract: Updated in-memory item
             Contract-->>Service: Return
-            Service-->>Controller: Updated Invoice
+            Service-->>Controller: Updated invoice
         end
     end
 
-    Controller-->>Caller: Handle(...) maps result/error to HTTP response
+    Controller-->>Caller: Return HTTP response
 
-    Note over Caller,Store: AS-BUILT — in-memory state; no durable database or PayEx submission
+    Note over Caller,Store: AS-BUILT. In-memory state only. No durable database or PayEx submission.
 
     %% Evidence: route, role and session username: backend/src/InvoiceApp.Api/Controllers/ApprovalsController.cs.
     %% Middleware registration: backend/src/InvoiceApp.Api/Program.cs.
