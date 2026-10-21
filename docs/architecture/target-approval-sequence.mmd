@@ -1,18 +1,31 @@
-sequenceDiagram
+﻿sequenceDiagram
     actor Approver
     participant API as Invoice API
-    participant DB as Database and outbox
-    participant Worker as Submission worker
-    participant PayEx as PayEx
+    participant DB as Database and outbox (proposed)
+    participant Worker as Submission worker (proposed)
+    participant PayEx as PayEx API (proposed)
 
     Approver->>API: Approve invoice
-    API->>DB: Save decision, audit and outbox transactionally
-    DB-->>API: Commit successful
+    API->>DB: Save decision, audit and outbox in one transaction
+    DB-->>API: Transaction committed
     API-->>Approver: Approval recorded; submission pending
 
     Worker->>DB: Read pending outbox item
-    Worker->>PayEx: Submit using stable idempotency key
-    PayEx-->>Worker: Return result or timeout
+    DB-->>Worker: Return submission details
+    Worker->>PayEx: Submit with stable idempotency key
 
-    Worker->>DB: Record outcome and provider reference
-    Note over Worker,PayEx: On timeout, retry with the same key if supported; otherwise reconcile first
+    alt Successful submission
+        PayEx-->>Worker: Success and provider reference
+        Worker->>DB: Save reference and completed status
+    else Definite rejection
+        PayEx-->>Worker: Rejection response
+        Worker->>DB: Record failure
+    else Timeout or ambiguous response
+        PayEx-->>Worker: Outcome unknown
+        Worker->>DB: Record unknown outcome
+        Note over Worker,PayEx: Do not blindly resubmit with a new key
+        Note over Worker,PayEx: Retry with the same key if supported
+        Note over Worker,PayEx: Otherwise reconcile before resubmission
+    end
+
+    Note over API,PayEx: PROPOSED DESIGN - NOT IMPLEMENTED
