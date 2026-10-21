@@ -31,10 +31,10 @@ run,case,expected_defect,reported_by_ai,score,justification
 2,case-03,Monetary rounding defect in incompatible diff,Excluded,Excluded,Fixture targets static Apply while current source exposes instance ApplyDiscount; exclude from primary metrics
 3,case-03,Monetary rounding defect in incompatible diff,Excluded,Excluded,Fixture targets static Apply while current source exposes instance ApplyDiscount; exclude from primary metrics
 4,case-03,Monetary rounding defect in incompatible diff,Excluded,Excluded,Fixture targets static Apply while current source exposes instance ApplyDiscount; exclude from primary metrics
-1,case-04,Repository field and constructor parameter rename,No,TP,Clean change; Run 1 correctly reported no findings
-2,case-04,Repository field and constructor parameter rename,No,TP,Clean change; Run 2 correctly reported no findings
+1,case-04,Repository field and constructor parameter rename,No,TN,Clean change; Run 1 correctly reported no findings
+2,case-04,Repository field and constructor parameter rename,No,TN,Clean change; Run 2 correctly reported no findings
 3,case-04,Repository field and constructor parameter rename,Yes,FP,Run 3 raised speculative named-argument compatibility risk without an established affected caller
-4,case-04,Repository field and constructor parameter rename,No,TP,Clean change; Run 4 correctly reported no findings
+4,case-04,Repository field and constructor parameter rename,No,TN,Clean change; Run 4 correctly reported no findings
 1,case-05,Delete method does not exist on repository interface,Yes,TP,Run 1 identified the Delete/Remove mismatch
 1,case-05,Undefined logger and CurrentUser references,Yes,TP,Run 1 identified undefined logger and CurrentUser
 2,case-05,Delete method does not exist on repository interface,Yes,TP,Run 2 identified the Delete/Remove mismatch
