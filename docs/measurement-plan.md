@@ -33,11 +33,11 @@ Measure whether AI-assisted development improves delivery speed without increasi
 
 ### Evidence A — Repository activity window
 
-- **Source:** Git commit history.
+- **Source:** Git commit history on the `master` branch.
 - **Command:** `git log --all --format="%h | %ad | %s" --date=iso-strict`
 - **Observed first commit:** `abe109b` — 2026-10-19 17:04:55 (+05:30).
-- **Observed latest commit in the reviewed history:** `3c713e5` — 2026-10-21 17:47:17 (+05:30).
-- **Elapsed window:** 48 hours, 42 minutes, 22 seconds.
+- **Observed latest commit at this review:** `5d4ed40` — 2026-10-21 21:03:42 (+05:30).
+- **Elapsed window:** 51 hours, 58 minutes, 47 seconds.
 
 This is the observed repository activity window, not measured lead time for a production change.
 
@@ -65,9 +65,15 @@ These are calculations from the repository's scenario-provided fixture. They are
 ### Evidence D — GitHub Actions execution history
 
 - **Workflow:** `.github/workflows/ci.yml`.
-- **Configured behavior:** Build and test the .NET solution in Release configuration on configured push and pull-request events.
-- **Observation during repository review:** No GitHub Actions workflow runs were returned at that time.
-- **Limitation:** There is no verified live-run sample from which to report CI success rate or actual CI duration.
+- **Branch:** `master`.
+- **Scope:** 4 completed push-triggered workflow runs observed during this review.
+- **Outcomes:** 4 successful runs, 0 failed runs.
+- **Observed sample success rate:** 100% (4/4).
+- **Approximate elapsed time from run creation to last update:** 23–40 seconds; median approximately 30 seconds.
+
+All four runs completed their Release build and test steps successfully.
+
+These results describe a small, assignment-specific CI sample. They are not production change-failure measurements, and four successful runs do not establish long-term CI reliability. Run elapsed time is estimated from GitHub's creation and last-update timestamps, not from detailed job timing measurements.
 
 ## 4. Data quality and reporting rules
 
