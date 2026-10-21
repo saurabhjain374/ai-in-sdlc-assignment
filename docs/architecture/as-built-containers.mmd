@@ -1,29 +1,57 @@
-flowchart LR
+﻿
+@'
+flowchart TB
     caller["Approver / Admin caller"]
-    subgraph apiHost["ASP.NET Core application"]
-        middleware["SessionAuthMiddleware / SessionStore"]
-        controllers["InvoicesController / ApprovalsController"]
-        service["ApprovalService (Domain)"]
-        repoContract["IInvoiceRepository (Domain)"]
-        repo["InMemoryInvoiceRepository"]
-        invoice["Invoice / InvoiceStatus"]
+
+    subgraph host["AS-BUILT | ASP.NET Core application"]
+        direction TB
+
+        subgraph api["API LAYER"]
+            direction LR
+            middleware["SessionAuthMiddleware"]
+            session[("SessionStore")]
+            controllers["InvoicesController<br/>ApprovalsController"]
+        end
+
+        subgraph domain["DOMAIN LAYER"]
+            direction LR
+            service["ApprovalService"]
+            repoContract["IInvoiceRepository"]
+            invoice["Invoice / InvoiceStatus"]
+        end
+
+        repo[("InMemoryInvoiceRepository")]
     end
 
     caller -->|HTTP requests| middleware
     middleware --> controllers
+    middleware --- session
     controllers --> service
     controllers --> repoContract
     service --> repoContract
-    repoContract -. implemented by .-> repo
+    repoContract -. "implements" .-> repo
     service --> invoice
     repo --> invoice
 
-    %% Citations / evidence map:
-    %% ASP.NET Core host and middleware: backend/src/InvoiceApp.Api/Program.cs, WebApplication.CreateBuilder/Build, UseMiddleware, MapControllers, Run.
-    %% SessionAuthMiddleware and SessionStore registration: backend/src/InvoiceApp.Api/Program.cs, AddSingleton<SessionStore>, UseMiddleware<SessionAuthMiddleware>.
+    classDef actor fill:#f1f5f9,stroke:#64748b,color:#0f172a,stroke-width:1.5px
+    classDef apiNode fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a,stroke-width:1.5px
+    classDef domainNode fill:#d1fae5,stroke:#059669,color:#064e3b,stroke-width:1.5px
+    classDef storeNode fill:#f3f4f6,stroke:#6b7280,color:#1f2937,stroke-width:1.5px
+
+    class caller actor
+    class middleware,session,controllers apiNode
+    class service,repoContract,invoice domainNode
+    class repo storeNode
+
+    style host fill:#f8fafc,stroke:#334155,stroke-width:2px,color:#0f172a
+    style api fill:#eff6ff,stroke:#60a5fa,stroke-width:1.5px,color:#1e3a8a
+    style domain fill:#ecfdf5,stroke:#34d399,stroke-width:1.5px,color:#065f46
+
+    %% Evidence:
+    %% ASP.NET Core host, session registration, middleware and DI: backend/src/InvoiceApp.Api/Program.cs.
     %% Controllers: backend/src/InvoiceApp.Api/Controllers/InvoicesController.cs and ApprovalsController.cs.
-    %% ApprovalService: backend/src/InvoiceApp.Domain/ApprovalService.cs, Submit/Approve/Reject.
+    %% ApprovalService: backend/src/InvoiceApp.Domain/ApprovalService.cs.
     %% IInvoiceRepository: backend/src/InvoiceApp.Domain/IInvoiceRepository.cs.
-    %% InMemoryInvoiceRepository and interface implementation: backend/src/InvoiceApp.Api/InMemoryInvoiceRepository.cs, class declaration and methods.
-    %% DI binds IInvoiceRepository to InMemoryInvoiceRepository: backend/src/InvoiceApp.Api/Program.cs, AddSingleton<IInvoiceRepository, InMemoryInvoiceRepository>.
+    %% InMemoryInvoiceRepository: backend/src/InvoiceApp.Api/InMemoryInvoiceRepository.cs.
     %% Invoice and InvoiceStatus: backend/src/InvoiceApp.Domain/Invoice.cs and InvoiceStatus.cs.
+'@ | Set-Content -Path "docs/architecture/as-built-containers.mmd" -Encoding utf8
