@@ -2,7 +2,7 @@
 
 **Status:** Proposed — not yet implemented
 
-## 1. Context?
+## 1. Context
 
 Our Invoice Approval service is currently used internally. We plan to make it a business-critical service that must run 24 hours a day, 7 days a week.
 
