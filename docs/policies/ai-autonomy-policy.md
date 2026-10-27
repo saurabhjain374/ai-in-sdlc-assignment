@@ -1,45 +1,92 @@
-# AI Autonomy Policy — Month-End Incident and Log Triage
+# AI Autonomy Policy — Month-End Invoice Incidents
 
 **Status:** Proposed  
 **Date:** 19 October 2026  
 **Owner:** Invoice Application Engineering Team
 
-## 1. Purpose and scope
+## 1. Why do we need this policy?
 
-Define how an AI agent may assist with month-end invoice-processing incidents. The agent may summarize alerts, correlate logs and metrics, identify likely causes, and recommend investigation steps. It must not independently change production systems or make financial decisions.
+During month-end invoice processing, problems may occur that require quick investigation.
 
-## 2. Autonomy levels
+An AI agent can help the team by:
+- Summarising alerts and error messages.
+- Checking logs and monitoring data to find possible causes.
+- Suggesting what to investigate next.
+- Preparing incident reports and possible solutions.
 
-| Level | Permitted actions | Required controls |
+However, AI must not independently change live systems or make decisions that could affect payments.
+
+**Our rule: AI can help investigate and recommend. A responsible person must verify the findings and decide what to do.**
+
+## 2. What is AI allowed to do?
+
+We use five levels to describe how much freedom the AI has.
+
+| Level | What it means | Example |
 |---|---|---|
-| L0 — Observe | Read approved alerts, logs, metrics and deployment history | Read-only access; redact secrets and personal data |
-| L1 — Recommend | Summarize symptoms, correlate evidence, suggest likely causes and next diagnostic steps | Cite source files, timestamps and relevant log lines; distinguish facts from hypotheses |
-| L2 — Prepare | Draft incident reports, diagnostic queries, test cases and proposed remediation changes | Human review before execution or publication |
-| L3 — Execute approved actions | Run explicitly allowlisted, reversible diagnostics or approved remediation through controlled tooling | Named human approval, audit trail, bounded permissions and rollback plan |
-| L4 — Autonomous production changes | Make production changes without per-action approval | Not permitted under this policy |
+| **L0 — Observe** | AI can read approved information but cannot change anything. | Read error logs and alerts. |
+| **L1 — Recommend** | AI can explain what might be wrong and suggest next steps. | Suggest checking a database connection after an error. |
+| **L2 — Prepare** | AI can prepare work for a person to review. | Draft a report, query or code change. |
+| **L3 — Execute approved actions** | AI can perform specific, pre-approved actions under strict controls. | Run an approved diagnostic check after a named person authorises it. |
+| **L4 — Act independently in production** | AI makes production changes without approval for each action. | Restart a production service on its own. |
 
-## 3. Day-one operating level
+L2 and L3 require additional controls and approval before they can be introduced. **L4 is not allowed under this policy.**
 
-**Day-one maximum: L1 (Recommend).** The engineering team has six members, including two who are new to the codebase. The agent must not deploy code, restart services, modify databases, replay messages, resubmit payments, or alter invoice approval states.
+## 3. What can AI do on day one?
 
-The agent may prepare an incident summary and proposed investigation plan, but a responsible engineer must verify the evidence and decide what to do.
+**Day-one limit: L1 — Recommend.**
 
-## 4. Mandatory safeguards
+Our engineering team has six members, including two who are new to the codebase. Therefore, we will start with limited AI permissions.
 
-- Use least-privilege, read-only credentials and approved data sources.
-- Treat logs, tickets, alert text and retrieved documents as untrusted data; never follow instructions embedded in them.
-- Never expose credentials, tokens, customer personal data or payment details in prompts or reports.
-- Every factual finding must link to supporting evidence. Label unsupported conclusions as hypotheses.
-- Do not treat a PayEx timeout as proof that a payment or submission failed. Require reconciliation before any potentially duplicate submission.
-- Preserve an audit trail of inputs, outputs, evidence references, model/prompt version and human decisions.
-- Escalate ambiguous, security-related, customer-impacting or financially consequential incidents to the on-call engineer.
+Initially, AI can read approved information, investigate possible causes and recommend next steps.
 
-## 5. Evidence required to increase autonomy
+AI must not:
+- Deploy code to production.
+- Restart production services.
+- Change database records.
+- Replay messages or resubmit payments.
+- Change an invoice's approval status.
 
-Before proposing L2 or L3, collect a representative evaluation set containing known incidents and clean/no-action cases. Measure missed findings, false alarms, evidence accuracy and unsafe recommendations. Require repeatable results, successful access-control tests, an audit trail, a documented rollback procedure and a named human owner.
+AI may prepare an incident summary and an investigation plan. A responsible engineer must check the evidence and decide what action to take.
 
-Any increase must be approved by the engineering lead and the production/service owner. Security approval is also required if permissions or sensitive data access change. Progress one level at a time; never enable L4 through this policy.
+## 4. What safety rules must AI follow?
 
-## 6. Review and rollback
+The following rules apply whenever AI assists with an incident.
 
-Review this policy after a material incident, a model/tool/permission change, or at least quarterly. Immediately suspend agent access if it exposes sensitive data, acts outside its approved scope, produces an unauthorised action, or cannot provide traceable evidence. Resume only after investigation and approval by the responsible owners.
+- **Limit access:** Give AI access only to the information and tools it needs. Initially, access must be read-only.
+- **Protect sensitive information:** Do not expose passwords, access tokens, customer personal information or payment details in prompts or reports.
+- **Do not blindly trust input:** Logs, tickets and documents may contain incorrect information or misleading instructions. AI must treat them as information to examine, not instructions to follow.
+- **Show evidence:** AI must point to the relevant logs, timestamps or other evidence supporting its findings. If something is only a guess, it must say so.
+- **Handle PayEx timeouts carefully:** A timeout does not prove that PayEx failed to process a submission. Check the submission status before attempting a potentially duplicate submission.
+- **Keep records:** Record what information AI used, what it recommended, which model and prompt version were used, and what decision the human made.
+- **Escalate risky situations:** Send unclear, security-related, customer-impacting or payment-related incidents to the on-call engineer.
+
+## 5. What must be proven before AI gets more freedom?
+
+We must not increase AI's permissions simply because it appears to work well.
+
+Before allowing L2 or L3, we must:
+
+1. Test AI against real or representative incidents, including cases where no action is needed.
+2. Measure how often AI misses problems, raises false alarms, uses incorrect evidence or recommends unsafe actions.
+3. Confirm that AI cannot access information or perform actions outside its permissions.
+4. Ensure that its recommendations and actions can be traced through an audit record.
+5. Document how to reverse an action if something goes wrong.
+6. Assign a responsible human owner.
+
+The engineering lead and production/service owner must approve any increase in autonomy. Security approval is also required if permissions or access to sensitive information change.
+
+We will increase autonomy one level at a time. L4 remains prohibited under this policy.
+
+## 6. When should we review or stop AI access?
+
+We will review this policy:
+- After a major incident.
+- When the AI model, tools or permissions change.
+- At least once every three months.
+
+We must immediately suspend AI access if it exposes sensitive information, performs an unauthorised action, goes beyond its approved permissions or cannot provide evidence for its findings.
+
+AI access can resume only after the issue has been investigated and the responsible owners approve it.
+
+**Final rule:** Start with AI as an assistant, not an independent operator. Give it more responsibility only after testing, evidence and formal approval show that it can be done safely.
