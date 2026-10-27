@@ -1,32 +1,33 @@
 # Measurement Plan: AI in the SDLC
 
-**Date:** 2026-10-21
+**Last updated:** 27 October 2026
 
 ## 1. Purpose
 
-The goal is to check whether AI helps us deliver software faster without increasing defects or risks.
+The goal is to understand whether AI helps us deliver software faster without increasing defects or risks.
 
-We will measure:
+We will track:
+
 - Lead time for changes
 - Production change failure rate
 - Code review turnaround time
 - CI pipeline results
 
-We must use actual evidence and clearly mention when data is missing.
+All measurements must be supported by evidence. Missing data must be clearly identified.
 
 ## 2. Metrics
 
 ### 2.1 Lead Time for Changes
 
-**What it means:** The time taken from the first commit of a change until it is deployed to production.
+**What it means:** The time between the first commit of a change and its production deployment.
 
-**How to measure:** Compare the first commit timestamp with the production deployment timestamp.
+**How to measure:** Compare the first commit timestamp with the verified production deployment timestamp.
 
-**Current status:** We have commit history, but a verified production deployment timestamp is not available. Therefore, actual production lead time cannot be calculated yet.
+**Current status:** Commit history is available, but a verified production deployment timestamp is not available. Actual production lead time cannot yet be calculated.
 
 ### 2.2 Change Failure Rate
 
-**What it means:** The percentage of production changes that cause a failure requiring a rollback, fix, or hotfix.
+**What it means:** The percentage of production changes that cause failures requiring a fix, rollback, or hotfix.
 
 **Formula:**
 
@@ -34,15 +35,15 @@ We must use actual evidence and clearly mention when data is missing.
 
 **How to measure:** Use production deployment records, incidents, rollbacks, and hotfix records.
 
-**Current status:** Verified production change and failure records are not available. Pipeline failures must not be counted as production failures.
+**Current status:** Verified production change and failure records are unavailable. Pipeline failures must not be counted as production failures.
 
 ### 2.3 Review Turnaround Time
 
 **What it means:** The time between a pull request becoming ready for review and receiving its first meaningful human review.
 
-**How to measure:** Compare GitHub's pull request timestamps and calculate the median review time.
+**How to measure:** Compare GitHub pull request timestamps and calculate the median review time.
 
-**Current status:** We have not collected a verified set of review timestamps yet.
+**Current status:** A verified set of review timestamps has not yet been collected.
 
 ## 3. Measurements Collected
 
@@ -55,10 +56,10 @@ We must use actual evidence and clearly mention when data is missing.
 `git log --all --format="%h | %ad | %s" --date=iso-strict`
 
 - First commit: `abe109b` — 19 October 2026, 17:04:55 (+05:30)
-- Latest commit at the time of review: `5d4ed40` — 21 October 2026, 21:03:42 (+05:30)
-- Total elapsed time: **51 hours, 58 minutes, 47 seconds**
+- Latest verified commit: `0085761` — 27 October 2026, 22:40:58 (+05:30)
+- Total elapsed time: **8 days, 5 hours, 36 minutes, 3 seconds**
 
-This shows how long the repository activity window lasted. It is **not production lead time**.
+This measures the repository activity window from the first commit to the latest verified commit. It is **not production lead time**.
 
 ### Evidence B — Evaluation File History
 
@@ -70,16 +71,20 @@ This shows how long the repository activity window lasted. It is **not productio
 
 `git log --all --reverse --format="%ad" --date=iso-strict -- ops/evals`
 
-- Commits affecting evaluation files: 5
-- Time span: 19 October 2026, 17:04:55 to 21 October 2026, 17:47:17 (+05:30)
+The previous measurement recorded:
 
-This shows when the evaluation files were updated. It does not tell us the actual engineering effort or code review time.
+- Commits affecting evaluation files: 5
+- Recorded period: 19 October 2026, 17:04:55 to 21 October 2026, 17:47:17 (+05:30)
+
+**Note:** These are the previously recorded results, not a verified count through 27 October. Run the commands again to confirm the latest count and time span.
+
+This history shows when evaluation files were updated. It does not measure engineering effort or code review time.
 
 ### Evidence C — Sample Pipeline Data
 
 **Source:** `ops/pipeline/run-timings.csv`
 
-The assignment provides sample pipeline data with these results:
+The assignment's sample pipeline data contains:
 
 - Total sample runs: 20
 - Successful runs: 18
@@ -90,52 +95,56 @@ The assignment provides sample pipeline data with these results:
 - Minimum: 1,702 seconds
 - Maximum: 2,108 seconds
 
-These numbers come from the assignment's sample data. They are **not live CI results or production failure measurements**.
+These figures come from the scenario-provided sample data. They are **not live CI results or production failure measurements**.
 
-The summed step durations may include parallel steps, so they should not automatically be treated as total pipeline elapsed time.
+The sum of step durations may include parallel steps, so it should not automatically be treated as total pipeline elapsed time.
 
 ### Evidence D — GitHub Actions Results
 
 **Source:** `.github/workflows/ci.yml`
 
+The previously observed sample contained:
+
 - Branch: `master`
-- Completed workflow runs observed: 4
+- Completed workflow runs: 4
 - Successful runs: 4
 - Failed runs: 0
 - Sample success rate: **100% (4 out of 4)**
 - Approximate elapsed time per run: 23–40 seconds
 - Median elapsed time: approximately 30 seconds
 
-All four observed runs completed the Release build and test steps successfully.
+All four runs in that sample completed the Release build and test steps successfully.
 
-This is a small sample from the assignment repository. It does not prove long-term CI reliability or improved production performance. The timings are estimates based on workflow creation and last-update timestamps.
+**Note:** This is the earlier observed sample, not a verified total through 27 October. Check the latest GitHub Actions history before reporting current totals.
 
-## 4. How We Will Report Results
+The sample is small and does not prove long-term CI reliability or improved production performance. The recorded timings are estimates based on workflow creation and last-update timestamps.
 
-For every measurement, we will record:
+## 4. Reporting Rules
 
-- The source of the data
-- The measurement period
-- The command or calculation used
-- The number of records measured
-- The result and its limitations
+For every measurement, record:
 
-We will keep sample data separate from live system data.
+- Data source and measurement period
+- Command or calculation used
+- Number of records measured
+- Result and its limitations
 
-If data is unavailable, we will report it as unavailable rather than zero. We will also avoid assuming that a commit means a change was deployed to production.
+Keep scenario-provided sample data separate from live system data.
+
+Do not report missing data as zero. Do not assume a commit means a change was deployed to production.
 
 ## 5. Next Steps
 
-1. Collect a baseline for production lead time, change failure rate, and review turnaround using verified records.
-2. Continue collecting CI results over a larger period.
-3. Repeat the measurements after introducing AI-assisted workflow changes.
-4. Compare similar periods and sample sizes.
-5. Check whether faster delivery is achieved without reducing quality.
+1. Refresh the repository activity and evaluation-file history using the commands above.
+2. Check the latest GitHub Actions runs and update the sample size, outcomes, and timings.
+3. Collect verified production deployment data to measure lead time.
+4. Collect production incidents, rollbacks, and hotfix records to measure change failure rate.
+5. Collect pull request review timestamps to measure review turnaround.
+6. Repeat the measurements over comparable periods and check whether delivery speed improves without reducing quality.
 
 ## 6. Conclusion
 
-We have measured the repository activity window, reviewed the sample pipeline data, and observed four successful GitHub Actions runs.
+The repository provides evidence of development activity, sample pipeline timings, and an earlier sample of four successful GitHub Actions runs.
 
-However, verified production deployment timestamps, production change failure records, and pull request review timestamps are still missing.
+However, production deployment timestamps, verified production change failure records, and pull request review timestamps are still unavailable. The latest CI totals and evaluation-file history also need to be refreshed before they can be reported as current.
 
-**Therefore, we cannot yet prove that AI has improved delivery performance.** More reliable data and measurements over a longer period are needed to reach that conclusion.
+**Therefore, we cannot yet prove that AI has improved delivery performance.** More complete and consistently collected evidence is needed to reach that conclusion.
