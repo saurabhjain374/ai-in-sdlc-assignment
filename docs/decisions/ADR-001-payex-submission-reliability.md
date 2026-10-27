@@ -1,149 +1,134 @@
-# ADR-001: Reliable PayEx Submission and Duplicate Prevention
+# ADR-001: Making PayEx Invoice Submissions Reliable
 
-- **Status:** Proposed
-- **Date:** 2026-10-19
-- **Decision owner:** Invoice Approval service team
-- **Scope:** Submitting approved invoices to PayEx without creating duplicate external effects
+**Status:** Proposed — not yet implemented
 
-## 1. Context
+## 1. Why do we need this decision?
 
-The Invoice Approval service is moving from an internal tool to a tier-2 service with 24x7 on-call support and published SLOs. The scenario anticipates approximately 40,000 invoices per month, with 60% arriving in the final three working days and a peak of around 80 approvals per minute.
+Our Invoice Approval service is currently used internally. We plan to make it a business-critical service that must run 24 hours a day, 7 days a week.
 
-The current implementation uses in-memory persistence. The PayEx integration and durable database are planned, not implemented. A PayEx request may time out after 30 seconds, and a timeout does not reliably mean that PayEx failed to process the request.
+The service will send approved invoices to PayEx for payment processing.
 
-Approval actions must be auditable for seven years to support the planned SOC 2 Type II audit.
+We expect around 40,000 invoices per month, with most activity happening during the last three working days of the month. At peak times, around 80 approvals may happen per minute.
 
-The core problem is that a network timeout can leave the service uncertain whether PayEx processed a submission. Blindly retrying can create a duplicate; never retrying can leave an invoice unprocessed.
+We need to make sure that:
+- Every approved invoice is safely recorded.
+- An invoice is not accidentally submitted to PayEx twice.
+- Failed or delayed submissions can be recovered.
+- We can explain what happened to an invoice, even months or years later.
 
-## 2. Decision
+**The main question:** What should happen if our application sends an invoice to PayEx but does not receive a response?
 
-**Prefer a transactional outbox with a durable submission record and a stable idempotency key, provided PayEx supports reliable idempotency semantics.**
+## 2. What options did we consider?
 
-The invoice decision, audit record, and outbox submission intent must be committed in one Azure SQL transaction. A background worker then submits the outbox item to PayEx.
+### Option A: Check for duplicates before sending
 
-Each logical submission receives a stable identifier. Retries reuse the same identifier; they must not generate a new key for the same logical submission. The worker records provider references and outcomes, and supports controlled retry and reconciliation.
+Before sending an invoice, the application checks whether it has already been submitted.
 
-A timeout is recorded as an **unknown outcome**, not as a confirmed failure. If PayEx does not support idempotency keys, the worker must reconcile the outcome with PayEx before attempting a potentially duplicate submission.
+- **Advantage:** Simple to understand and may prevent duplicate submissions.
+- **Disadvantage:** If the application stops unexpectedly, the invoice could still be missed. Checking our own records alone cannot always tell us whether PayEx processed the invoice.
 
-The outbox provides durable delivery, not magical exactly-once execution at the external provider. Duplicate-safe external effects depend on PayEx idempotency or an effective reconciliation protocol.
+### Option B: Save the invoice request and send it in the background
 
-## 3. Options considered
+The application first saves the submission request in its database. A separate background process then sends it to PayEx.
 
-### Option A — Idempotency key plus deduplication table
+- **Advantage:** The request is saved before sending, so it can be retried or investigated if something goes wrong.
+- **Disadvantage:** This requires additional database records and a background process. We must also handle cases where PayEx processes a request but our application does not receive the response.
 
-The API or submission component creates a stable idempotency key and persists it with a unique constraint. Duplicate requests with the same key return the existing submission result rather than creating a new logical submission.
+### Option C: Send directly and check later
 
-**Advantages**
-- Straightforward duplicate detection.
-- Unique constraints can prevent concurrent duplicate records.
-- Works well when PayEx supports idempotency keys.
+The application sends the invoice directly to PayEx and checks for missing or failed submissions later.
 
-**Disadvantages**
-- A deduplication table alone does not atomically coordinate invoice approval and an external HTTP call.
-- A crash between persisting local state and calling PayEx can leave the submission stranded.
-- A timeout still requires safe retry or reconciliation.
+- **Advantage:** Less work to set up initially.
+- **Disadvantage:** Problems may remain unnoticed until the later check. Recovering missing or duplicate submissions can be harder.
 
-**Assessment:** Necessary protection, but insufficient as the complete delivery mechanism.
+## 3. What do we recommend?
 
-### Option B — Transactional outbox plus background worker
+**We recommend Option B: Save the request first, then send it through a background process.**
 
-The service writes the invoice decision, audit record, and outbox item in one database transaction. A worker delivers pending items and tracks attempts, outcomes, and provider references.
+This gives us a reliable record of what needs to be sent and helps us recover if the application or network fails.
 
-**Advantages**
-- Prevents the database commit and submission intent from silently diverging.
-- Supports durable retries, observability, and operational recovery.
-- Separates approval latency from provider latency.
-- Provides a clear queue of work for on-call engineers.
+We will also use a consistent reference for each invoice submission so that retries can be recognised as the same request.
 
-**Disadvantages**
-- Adds worker deployment, outbox polling or dispatch, retry policies, monitoring, and operational procedures.
-- Delivery is at least once; the worker can send the same item again after a crash.
-- Requires PayEx idempotency or reconciliation to prevent duplicate external effects.
+Where PayEx supports duplicate protection using this reference, we should use it. If PayEx does not support this, we must check PayEx's records before resending a request whose outcome is unknown.
 
-**Assessment:** Preferred, combined with stable submission identifiers and provider idempotency or reconciliation.
+**Important:** Saving the request first makes our process more reliable, but it does not by itself guarantee that PayEx will process an invoice only once.
 
-### Option C — Optimistic submission plus nightly reconciliation
+## 4. What happens if PayEx does not respond?
 
-The service attempts submission directly and uses a nightly job to compare local records against PayEx.
+Imagine it is 3 a.m. on the last working day of the month. Our application sends an invoice to PayEx, but the request times out.
 
-**Advantages**
-- Less infrastructure initially.
-- Reconciliation can detect missing or inconsistent records.
+A timeout does not mean the submission failed. PayEx might have processed the invoice but failed to send a response back.
 
-**Disadvantages**
-- Duplicate or missing submissions can remain unresolved for hours.
-- A nightly batch is poorly matched to a tier-2 service with 24x7 expectations.
-- The system needs a way to identify provider-side outcomes and resolve ambiguous cases.
-- Reconciliation becomes a critical operational dependency during month-end peaks.
+We will handle this as follows:
 
-**Assessment:** Useful as a complementary control, but not sufficient as the primary reliability strategy.
+1. **Keep the record:** The original request remains safely saved in our database.
+2. **Do not assume failure:** Mark the outcome as unknown until we have enough information.
+3. **Check before resending:** If PayEx supports duplicate protection, retry using the same reference. Otherwise, check PayEx's records before sending again.
+4. **Raise an alert if needed:** If the outcome cannot be confirmed, notify the support team.
+5. **Resolve carefully:** If the system cannot safely determine what happened, a person must investigate before the invoice is resubmitted.
 
-## 4. Failure analysis: 3 a.m. on the final working day of the month
+This approach reduces the risk of losing an invoice or processing it twice.
 
-Assume the worker submits an invoice, PayEx processes it, but the response times out.
+## 5. What will this cost us?
 
-1. Mark the attempt as `UnknownOutcome`; do not mark it as a definite failure.
-2. Retain the outbox item and its original idempotency key.
-3. If PayEx guarantees idempotent handling for that key, retry with the same key according to the documented retry policy.
-4. If provider idempotency is unavailable or uncertain, query the provider using a stable merchant reference or supported reconciliation interface before resubmitting.
-5. Alert on the age and count of unknown outcomes, retry backlog, and oldest pending outbox item.
-6. If the provider cannot establish the outcome automatically, keep the item in a controlled exception state and require an auditable human decision.
+| Area | What is required? |
+|---|---|
+| Development | Additional database records and a background process |
+| Testing | Tests for timeouts, retries, application restarts and duplicate submissions |
+| Support | Monitoring, alerts and a process for investigating unresolved submissions |
+| Audit | Keeping records of submission attempts, responses and final outcomes |
 
-The on-call runbook must explain how to identify affected invoices, inspect attempt history, safely retry, reconcile, and escalate. Operators must not manually create a fresh submission key simply to make a retry succeed.
+These additions require more work than sending invoices directly. However, they make the service easier to support and safer to operate as a business-critical system.
 
-## 5. Build and run costs
+## 6. How will we monitor and track submissions?
 
-| Option | Build cost | Run cost | Main operational burden |
-|---|---|---|---|
-| Idempotency key + dedupe table | Medium | Low–medium | Key lifecycle, uniqueness, ambiguous outcomes |
-| Transactional outbox + worker | High | Medium–high | Worker health, backlog, retries, dead letters, reconciliation |
-| Direct submission + nightly reconciliation | Low initially | Medium–high over time | Delayed detection, batch failures, manual exception handling |
+The proposed solution should keep a record of:
+- Which invoice was submitted and when.
+- How many times a submission was attempted.
+- What response PayEx returned.
+- Whether the final outcome is successful, failed or still unknown.
+- How an unresolved submission was investigated and resolved.
 
-These are relative engineering estimates, not measured costs or vendor quotations. Actual cost depends on Azure configuration, PayEx contract capabilities, transaction volume, retention, and operational support requirements.
+We should also alert the support team when submissions keep failing or remain unresolved for too long.
 
-## 6. Controls and auditability
+These records will help with troubleshooting, customer queries and future audit requirements.
 
-- Persist approval decisions and relevant submission state durably.
-- Retain immutable or tamper-evident audit records for the required seven years, subject to approved retention and access policies.
-- Enforce unique identifiers for logical submissions.
-- Record attempt timestamps, outcomes, provider references, retry counts, and operator interventions.
-- Use bounded retries with backoff and alerting; do not retry indefinitely without visibility.
-- Avoid logging credentials, tokens, or sensitive payment data.
-- Test duplicate delivery, concurrent workers, process crashes, provider timeouts, and recovery after restart.
-- Verify PayEx's idempotency contract, key scope, retention period, and behavior when the same key is reused with a different payload before production.
+## 7. Why isn't checking for duplicates enough?
 
-## 7. Reconsideration triggers
+Checking our own database is useful, but it cannot always tell us what happened at PayEx.
 
-Revisit this decision if:
-- PayEx does not support idempotency and offers no reliable way to query submission outcomes.
-- The provider's idempotency-key retention period is shorter than the maximum retry and reconciliation window.
-- Transactional outbox complexity exceeds the team's support capacity and a managed delivery mechanism meets the same correctness requirements.
-- Measured latency, backlog, failure rate, or SLO performance breaches agreed thresholds.
-- Audit, legal, or security requirements change the retention or evidence model.
+For example, PayEx may successfully process an invoice while our application loses the response. Our database could still show that the outcome is unknown.
 
-## 8. Challenge the preferred option
+If we simply send the invoice again, PayEx might process it twice.
 
-A plausible alternative recommendation is to use only an idempotency key plus a deduplication table because the current throughput—around 80 approvals per minute at peak—is modest and a worker introduces operational complexity.
+That is why we need **both** a reliable way to save and retry requests, and a safe way to handle duplicate submissions. PayEx's support for duplicate protection will determine how we implement the second part.
 
-That alternative is attractive if PayEx idempotency is strong and submission state can be coordinated safely. However, the deduplication table by itself does not guarantee that every committed approval will eventually be submitted. The outbox closes that local durability gap and provides a recoverable queue of work.
+## 8. When should we review this decision?
 
-If the provider cannot deduplicate requests or support reconciliation, none of these options alone can guarantee exactly-once external effects across an ambiguous network failure. That limitation must be resolved with the provider or accepted explicitly as a business risk.
+We should review this decision if:
+- PayEx provides new or different duplicate-protection features.
+- The expected invoice volume increases significantly.
+- The business introduces stricter recovery or availability requirements.
+- The proposed design proves too costly or difficult to operate.
 
-## 9. Where the agent was wrong or useless
+## 9. What did the AI get wrong or fail to clarify?
 
-- **A deduplication table alone is not enough.** It can stop duplicate local records but cannot guarantee delivery after a process crash between a database write and the provider call.
-- **An outbox does not guarantee exactly-once PayEx execution.** It guarantees durable local intent and normally at-least-once delivery; external idempotency or reconciliation is still required.
-- **A timeout is not a failure signal.** Retrying with a newly generated key can duplicate a payment or submission that PayEx already accepted.
-- **Nightly reconciliation is not an adequate primary recovery mechanism** for a tier-2, 24x7 service when month-end work is concentrated and delayed resolution matters.
-- **The cost comparison is qualitative.** Without actual Azure pricing, PayEx contract details, and measured failure rates, presenting numerical savings or a definitive total cost would be unjustified.
+The AI did not clearly explain the difference between safely saving an invoice request and preventing the same invoice from being processed twice.
 
-The final decision remains conditional on verifying PayEx's actual idempotency and reconciliation capabilities. A design review and failure-injection tests are required before production approval.
+Saving the request in our database helps us recover if something goes wrong. However, if PayEx processes an invoice but our application does not receive the response, sending the invoice again could result in duplicate processing.
 
-## 10. Validation required before implementation
+We therefore need to confirm whether PayEx supports duplicate protection before deciding how retries should work.
 
-- Confirm PayEx idempotency-key support, uniqueness scope, retention, and replay behavior.
-- Confirm the provider's query/reconciliation capability for unknown outcomes.
-- Agree on submission state transitions and operational ownership.
-- Define retry limits, backlog alerts, unknown-outcome alerts, and escalation procedures.
-- Test process termination after database commit, after provider acceptance, and before recording the response.
-- Verify the audit-retention design against the seven-year requirement.
+The AI also needed to make it clear that the proposed database and background process are part of the planned solution and have not yet been implemented.
+
+## 10. What must be confirmed before implementation?
+
+Before we build this solution, we must confirm:
+
+- Whether PayEx supports a unique reference that prevents the same invoice from being processed twice.
+- How we can check the status of a submission when a request times out.
+- How long submission and audit records must be retained.
+- How alerts, retries and unresolved submissions will be handled by the support team.
+- How the solution will be tested before it becomes business-critical.
+
+**Final decision:** Save each submission request first, process it in the background, and handle retries carefully. Never assume that a timeout means the invoice was not processed. Confirm PayEx's duplicate-protection capabilities before deciding how to safely resend uncertain submissions.
