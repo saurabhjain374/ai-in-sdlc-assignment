@@ -2,7 +2,7 @@
 
 **Status:** Proposed — not yet implemented
 
-## 1. Why do we need this decision?
+## 1. Context?
 
 Our Invoice Approval service is currently used internally. We plan to make it a business-critical service that must run 24 hours a day, 7 days a week.
 
@@ -53,7 +53,17 @@ Where PayEx supports duplicate protection using this reference, we should use it
 
 **Important:** Saving the request first makes our process more reliable, but it does not by itself guarantee that PayEx will process an invoice only once.
 
-## 4. What happens if PayEx does not respond?
+## 9. Where the Agent Was Wrong or Useless?
+
+The AI suggested saving invoice requests in a database before sending them to PayEx. This was useful for recovering requests after a failure, but the suggestion did not fully address the risk of duplicate processing.
+
+For example, PayEx might process an invoice successfully, but our application might not receive the response. Sending the invoice again without checking could cause it to be processed twice.
+
+The AI's initial suggestion was therefore incomplete. We identified this gap and clarified that retries must use PayEx's duplicate-protection feature where supported, or check the submission status before resending.
+
+This review helped us distinguish between recovering a saved request and preventing duplicate processing.
+
+## 4. Failure Scenario: PayEx Does Not Respond?
 
 Imagine it is 3 a.m. on the last working day of the month. Our application sends an invoice to PayEx, but the request times out.
 
@@ -110,16 +120,6 @@ We should review this decision if:
 - The expected invoice volume increases significantly.
 - The business introduces stricter recovery or availability requirements.
 - The proposed design proves too costly or difficult to operate.
-
-## 9. What did the AI get wrong or fail to clarify?
-
-The AI did not clearly explain the difference between safely saving an invoice request and preventing the same invoice from being processed twice.
-
-Saving the request in our database helps us recover if something goes wrong. However, if PayEx processes an invoice but our application does not receive the response, sending the invoice again could result in duplicate processing.
-
-We therefore need to confirm whether PayEx supports duplicate protection before deciding how retries should work.
-
-The AI also needed to make it clear that the proposed database and background process are part of the planned solution and have not yet been implemented.
 
 ## 10. What must be confirmed before implementation?
 
