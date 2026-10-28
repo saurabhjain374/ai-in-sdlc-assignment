@@ -53,7 +53,17 @@ Where PayEx supports duplicate protection using this reference, we should use it
 
 **Important:** Saving the request first makes our process more reliable, but it does not by itself guarantee that PayEx will process an invoice only once.
 
-## 4. Where the Agent Was Wrong or Useless?
+## 4. Why isn't checking for duplicates enough?
+
+Checking our own database is useful, but it cannot always tell us what happened at PayEx.
+
+For example, PayEx may successfully process an invoice while our application loses the response. Our database could still show that the outcome is unknown.
+
+If we simply send the invoice again, PayEx might process it twice.
+
+That is why we need **both** a reliable way to save and retry requests, and a safe way to handle duplicate submissions. PayEx's support for duplicate protection will determine how we implement the second part.
+
+## 5. Where the Agent Was Wrong or Useless?
 
 The AI suggested saving invoice requests in a database before sending them to PayEx. This was useful for recovering requests after a failure, but the suggestion did not fully address the risk of duplicate processing.
 
@@ -63,7 +73,7 @@ The AI's initial suggestion was therefore incomplete. We identified this gap and
 
 This review helped us distinguish between recovering a saved request and preventing duplicate processing.
 
-## 5. Failure Scenario: PayEx Does Not Respond?
+## 6. Failure Scenario: PayEx Does Not Respond?
 
 Imagine it is 3 a.m. on the last working day of the month. Our application sends an invoice to PayEx, but the request times out.
 
@@ -79,7 +89,7 @@ We will handle this as follows:
 
 This approach reduces the risk of losing an invoice or processing it twice.
 
-## 6. What will this cost us?
+## 7. What will this cost us?
 
 | Area | What is required? |
 |---|---|
@@ -90,7 +100,7 @@ This approach reduces the risk of losing an invoice or processing it twice.
 
 These additions require more work than sending invoices directly. However, they make the service easier to support and safer to operate as a business-critical system.
 
-## 7. How will we monitor and track submissions?
+## 8. How will we monitor and track submissions?
 
 The proposed solution should keep a record of:
 - Which invoice was submitted and when.
@@ -102,16 +112,6 @@ The proposed solution should keep a record of:
 We should also alert the support team when submissions keep failing or remain unresolved for too long.
 
 These records will help with troubleshooting, customer queries and future audit requirements.
-
-## 8. Why isn't checking for duplicates enough?
-
-Checking our own database is useful, but it cannot always tell us what happened at PayEx.
-
-For example, PayEx may successfully process an invoice while our application loses the response. Our database could still show that the outcome is unknown.
-
-If we simply send the invoice again, PayEx might process it twice.
-
-That is why we need **both** a reliable way to save and retry requests, and a safe way to handle duplicate submissions. PayEx's support for duplicate protection will determine how we implement the second part.
 
 ## 9. When should we review this decision?
 
