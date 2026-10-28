@@ -5,7 +5,7 @@
 
 ## 1. Logging approach
 
-This document provides a readable summary of AI-assisted development. The corresponding `ai-augmentation-log.jsonl` contains structured task-level records.
+This document provides a readable summary of AI-assisted development. The corresponding `ai-augmentation-log.json` contains structured task-level records.
 
 The log is retrospective. Exact prompts, timestamps, agent configuration, and tool-call details are included only where evidence is available. Reconstructed task descriptions are summaries, not verbatim prompts.
 
