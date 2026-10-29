@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ],
+    "subagentStart": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "command": "python scripts/ai_augmentation_logger.py",
+        "windows": "py -3 scripts/ai_augmentation_logger.py",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}
