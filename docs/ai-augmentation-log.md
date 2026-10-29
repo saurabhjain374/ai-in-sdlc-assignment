@@ -5,7 +5,7 @@
 
 ## 1. How to read this log
 
-`ai-augmentation-log.json` contains five structured JSONL records (one JSON object per line). Each record includes:
+`ai-augmentation-log.json` contains six structured JSONL records (one JSON object per line). Each record includes:
 
 - **Activity date and timestamp:** The original activity date/time was not captured, so `activity_date` and `timestamp` are `null`. `log_regenerated_date` records when this log was regenerated; it is not the date the original activity happened.
 - **Agent and model:** Recorded only when the existing notes support the detail. The code-review evaluation records GitHub Copilot Chat Ask and GPT-5.6 Luna. Other activities do not have a confirmed specific agent/model in the available notes.
@@ -61,6 +61,14 @@
 - **Artifact:** `docs/measurement-plan.md`.
 - **Metadata gap:** Exact activity date/time, specific agent/model, session reference, and MCP usage were not preserved.
 
+### 2.6 Automatic AI augmentation event logging setup
+
+- **AI contribution:** Helped configure VS Code Copilot lifecycle hooks and a Python logger to append event metadata to `docs/ai-augmentation-events.jsonl`.
+- **Human decision:** Chose hook-based automation after review feedback requested subagents/hooks; the logger excludes prompt text, tool argument values, and tool outputs.
+- **Verification:** The hook configuration, logger script, and setup guide were created and re-fetched from GitHub. Actual execution in the user's VS Code session is still pending.
+- **Artifacts:** `.github/hooks/ai-augmentation-logging.json`, `scripts/ai_augmentation_logger.py`, `docs/AI-AUGMENTATION-HOOKS.md`.
+- **Limitation:** This captures lifecycle metadata, not a full transcript; human decisions and verification evidence still need human review.
+
 ## 3. Human oversight and accountability
 
 AI outputs were treated as suggestions rather than automatically accepted facts. Human oversight included:
@@ -80,9 +88,13 @@ The author remains responsible for final decisions, validation, and claims made 
 - The regeneration date is recorded separately and must not be mistaken for an activity timestamp.
 - Agent/model/mode details are included only where supported by the existing notes.
 - Historical MCP server usage, skills, sub-agents, and exact tool calls were not captured. Unknown fields do not prove that those capabilities were not used.
-- The log is a retrospective summary, not an automatically generated, complete transcript of all AI activity.
+- The original activity records are retrospective summaries, not a complete transcript. A separate hook-based event log is now configured for future activity; it still requires runtime verification in VS Code.
 - Validation evidence supports only the specific checks recorded; it does not establish production readiness by itself.
 
-## 5. For future activities
+## 5. Automatic event capture and future activities
+
+The hook setup is documented in [AI-AUGMENTATION-HOOKS.md](AI-AUGMENTATION-HOOKS.md). When it runs, it appends metadata to `docs/ai-augmentation-events.jsonl`. The event file is created by the first hook execution and is not present until then.
+
+For future activities
 
 Capture the activity date/time with timezone, agent and model, tools, MCP server/tool names, relevant prompts or session references where permitted, human decisions, verification evidence, and affected files at the time the work occurs. Do not backfill missing historical values from memory unless clearly labeled as an estimate.
